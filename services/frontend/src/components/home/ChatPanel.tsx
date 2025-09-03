@@ -1,0 +1,208 @@
+import { useEffect } from "../../hooks/useEffect";
+import { useRef } from "../../hooks/useRef";
+import { useState } from "../../hooks/useState";
+import { h } from '../../vdom/createElement';
+import { ComponentFunction } from "../../types/global";
+
+
+interface Friend {
+  id?: number;
+  avatar: string;
+  online: boolean;
+  name?: string;
+}
+
+const FriendItem: ComponentFunction = (props = {}) => {
+  const friend = props.friend as Friend;
+  const cadreBg = friend.online ? "/images/home-assests/cir-online.svg" : "/images/home-assests/cir-offline.svg";
+  return h('div', { className: "flex flex-row items-center w-16 translate-y-14" },
+    h('div', { 
+      className: "w-20 h-20 relative flex items-center justify-center bg-no-repeat bg-contain",
+      style: { backgroundImage: `url(${cadreBg})` }
+    },
+      h('img', {
+        src: friend.avatar,
+        alt: "Friend Avatar",
+        className: "w-12 h-12 rounded-full object-cover relative -top-[7px]"
+      })
+    )
+  );
+}
+
+function chunk<T>(arr: T[], size: number): T[][] {
+  return Array.from({ length: Math.ceil(arr.length / size) }, (_, i) =>
+    arr.slice(i * size, i * size + size)
+  );
+}
+
+export const ChatPanel: ComponentFunction = () => {
+  const [friends, setFriends] = useState<Friend[]>([]);
+  // const [loading, setLoading] = useState<boolean>(true);
+  // const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchFriends = async () => {
+      try {
+        // setLoading(true);
+        // setError(null);
+        
+        const response = await fetch('http://localhost:5000/friends');
+        if (!response.ok) {
+          throw new Error(`Failed to fetch friends: ${response.status} ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        setFriends(data);
+      } catch (err) {
+        console.error('Error fetching friends:', err);
+        // setError(err instanceof Error ? err.message : 'An unknown error occurred');
+      } 
+      // finally {
+      //   setLoading(false);
+      // }
+    };
+
+    fetchFriends();
+  }, []);
+
+  const friendColumns = chunk(friends, 2);
+
+
+  // if (loading) {
+  //   return (
+  //     <aside className="w-[25%] p-2 flex flex-col gap-4">
+  //       <div className="relative w-full">
+  //         <button
+  //           className="h-[50px] w-[260px] py-2 bg-no-repeat bg-contain 
+  //             bg-center text-white relative left-16 top-3"
+  //           style={{ backgroundImage: "url('/images/home-assests/bg-gameMode.svg')" }}
+  //         >
+  //           <span className="font-irish font-bold tracking-wide text-sm sm:text-base md:text-2xl">
+  //             Loading Friends...
+  //           </span>
+  //         </button>
+  //         <div
+  //           className="relative rounded-lg h-[320px] w-[340px]
+  //             bg-no-repeat bg-center bg-[length:340px_330px] translate-x-7 overflow-hidden
+  //             flex items-center justify-center"
+  //           style={{ backgroundImage: "url('/images/home-assests/bg-online.svg')" }}
+  //         >
+  //           <div className="text-white text-center">
+  //             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-2"></div>
+  //             <p>Loading friends...</p>
+  //           </div>
+  //         </div>
+  //       </div>
+  //     </aside>
+  //   );
+  // }
+
+  
+  // if (error) {
+  //   return (
+  //     <aside className="w-[25%] p-2 flex flex-col gap-4">
+  //       <div className="relative w-full">
+  //         <button
+  //           className="h-[50px] w-[260px] py-2 bg-no-repeat bg-contain 
+  //             bg-center text-white relative left-16 top-3"
+  //           style={{ backgroundImage: "url('/images/home-assests/bg-gameMode.svg')" }}
+  //         >
+  //           <span className="font-irish font-bold tracking-wide text-sm sm:text-base md:text-2xl">
+  //             Friends Error
+  //           </span>
+  //         </button>
+  //         <div
+  //           className="relative rounded-lg h-[320px] w-[340px]
+  //             bg-no-repeat bg-center bg-[length:340px_330px] translate-x-7 overflow-hidden
+  //             flex items-center justify-center"
+  //           style={{ backgroundImage: "url('/images/home-assests/bg-online.svg')" }}
+  //         >
+  //           <div className="text-white text-center p-4">
+  //             <p className="text-red-300 mb-2">Failed to load friends</p>
+  //             <p className="text-sm">{error}</p>
+  //             <button 
+  //               className="mt-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 rounded text-white text-sm"
+  //               onClick={() => window.location.reload()}
+  //             >
+  //               Retry
+  //             </button>
+  //           </div>
+  //         </div>
+  //       </div>
+  //     </aside>
+  //   );
+  // }
+
+
+  if (friends.length === 0) 
+    {
+    return (
+      <aside className="w-[25%] p-2 flex flex-col gap-4">
+        <div className="relative w-full">
+          <button
+            className="h-[50px] w-[260px] py-2 bg-no-repeat bg-contain 
+              bg-center text-white relative left-16 top-3"
+            style={{ backgroundImage: "url('/images/home-assests/bg-gameMode.svg')" }}
+          >
+            <span className="font-irish font-bold tracking-wide text-sm sm:text-base md:text-2xl">
+              No Friends Online
+            </span>
+          </button>
+          <div
+            className="relative rounded-lg h-[320px] w-[340px]
+              bg-no-repeat bg-center bg-[length:340px_330px] translate-x-7 overflow-hidden
+              flex items-center justify-center"
+            style={{ backgroundImage: "url('/images/home-assests/bg-online.svg')" }}
+          >
+            <div className="text-white text-center">
+              <p>No friends found</p>
+            </div>
+          </div>
+        </div>
+      </aside>
+    );
+  }
+
+
+  return (
+    <aside className="w-[25%] p-2 flex flex-col gap-4">
+      <div className="relative w-full">
+        <button
+          className="h-[50px] w-[260px] py-2 bg-no-repeat bg-contain 
+            bg-center text-white relative left-16 top-3"
+          style={{ backgroundImage: "url('/images/home-assests/bg-gameMode.svg')" }}
+        >
+          <span className="font-irish font-bold tracking-wide text-sm sm:text-base md:text-2xl">
+            Friends Online
+          </span>
+        </button>
+        <div
+          className="relative rounded-lg h-[320px] w-[340px]
+            bg-no-repeat bg-center bg-[length:340px_330px] translate-x-7 overflow-hidden"
+          style={{ backgroundImage: "url('/images/home-assests/bg-online.svg')" }}
+        >
+          <div
+            className="absolute inset-0 ml-4 pr-4 max-w-[300px] overflow-x-auto overflow-y-hidden "
+            style={{
+              scrollbarWidth: 'thin',
+              scrollbarColor: '#64B0C5 transparent',
+              msOverflowStyle: 'auto',
+            }}
+          >
+            <div className="flex gap-7 p-4" style={{ minWidth: 'max-content' }}>
+              {friendColumns.map((group, idx) => (
+                <div
+                  key={idx}
+                  className="flex flex-col gap-4 items-center min-w-[60px] flex-shrink-0">
+                  {group.map((friend, friendIdx) => 
+                    h(FriendItem, { friend }, friend.id || `friend-${idx}-${friendIdx}`)
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+  );
+}
