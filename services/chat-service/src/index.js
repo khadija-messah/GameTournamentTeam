@@ -32,24 +32,30 @@ function add_connection(from, connection)
   clients.get(from).push(connection); 
 }
 
-
-function broadcast_all(msg) {
-  const conns = clients.get(msg.to);
+function broadcast_all(data_send) {
+  const conns = clients.get(data_send.to);
   if (conns) {
     for (const i of conns) {
       if (i.readyState === i.OPEN) {
-        i.send(JSON.stringify(msg));
+        i.send(JSON.stringify(data_send));
       }
     }
   }
+  console.log("---------------------------------")
 }
-function find_online(id_to)
+function find_online(data_send)
 {
-  console.log('--- ', clients.has(id_to))
-  if(clients.has(id_to))
-    console.log("had client rah online : ", id_to)
+  if(clients.has(data_send.to))
+  {
+    console.log("client deja online")
+    broadcast_all(data_send)
+    return true;
+  }
   else
-    console.log("la had client offline: ", id_to)
+  {
+    console.log("khas database")
+    return false;
+  }
 }
 fastify.register(async function (fastify) {
   fastify.get('/ws/chat', { websocket: true }, (connection, req) => {
@@ -77,8 +83,7 @@ fastify.register(async function (fastify) {
           type:data.type,
           message:data.message
         }
-        broadcast_all(data_send)
-        find_online(data.to)
+        find_online(data_send)
       }
       if(data.type === 'ping')
       {

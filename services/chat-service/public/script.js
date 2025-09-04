@@ -98,7 +98,6 @@ ws.onmessage = (event) => {
     }
 };
 
-
 function displayMessage(msg) {
     const listItem = document.createElement('li');
     listItem.classList.add('message');
