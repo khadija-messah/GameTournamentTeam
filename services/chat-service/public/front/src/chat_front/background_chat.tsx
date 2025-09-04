@@ -26,12 +26,13 @@ export default function Bchat() {
         })
         .then(data => {
           setid(data.id);
-          fetch("https://randomuser.me/api/?results=5", {
+          fetch("https://api.escuelajs.co/api/v1/users", {
             method: "GET",
           })
             .then((res) => res.json())
             .then((friends) => {
-              setFrieends(friends.results);
+              console.log("friends response =>", friends);
+              setFrieends(friends);
               const payload = {
                 type: "user-info",
                 ...data,
@@ -78,18 +79,19 @@ export default function Bchat() {
     };
   }, []);
 
-  function get_message(event) {
-    const msg = event.target.value;
-    setMessage(msg);
-  }
-
-  function sendMessage() {
+  function sendMessage(info) {
     if (socket.current && message.trim() !== '') {
+      console.log("infooooo is ", info)
       const data = JSON.stringify({ type: 'message', message: message, id: id });
       console.log("message how ", message);
       socket.current.send(data);
       setMessage('');
     }
+  }
+  
+  function get_message(event) {
+    const msg = event.target.value;
+    setMessage(msg);
   }
 
   return (
@@ -140,7 +142,7 @@ export default function Bchat() {
                       className='w-full h-full rounded-3xl px-3 hover:shadow-lg opacity-40 placeholder:text-[1vw] focus:outline-none'
                       value={message}
                       onChange={get_message}
-                      onKeyDown={(e) => { e.key === 'Enter' && sendMessage() }}
+                      onKeyDown={(e) => { e.key === 'Enter' && sendMessage({from:id, to:name_friend.id , name:name_friend.name}) }}
                       placeholder="Type your message..."
                     />
                     <button onClick={sendMessage}>

@@ -25,27 +25,32 @@ export default function Online({data_friend, name_friend}) {
 }
 
 export function Get_user({ data_friend, name_friend }) {
+    if (!Array.isArray(data_friend)){
+        console.log("map khawian")
+        return null;
+    } 
     return (
       <div className="flex flex-col items-center gap-4">
-        {data_friend.map((user, index) => (
+        {data_friend.map((user) => (
           <button
-            key={index}
+            key={user.id}
             onClick={() =>
               name_friend({
                 id: user.id,
-                name: user.name.first,
-                image: user.picture.thumbnail
+                name: user.name,
+                image: user.avatar
               })
             }
             className="w-60% h-60% rounded-full flex items-center justify-center overflow-hidden hover:drop-shadow-[0_0_10px_white]"
           >
             <img
               className="w-full h-full object-cover rounded-full"
-              src={user.picture.thumbnail}
-              alt={user.name.first}
+              src={user.avatar || '/images/chat/default-avatar.png'}
+              alt={user.name}
             />
           </button>
         ))}
       </div>
     );
   }
+  
