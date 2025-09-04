@@ -56,8 +56,8 @@ export default function Bchat() {
       console.log('data recive type', data.type);
 
       if (data.type === 'message') {
-        console.log("client received message:", data.message, data.time);
-        setMessages(prev => [...prev, { text: data.message, time: data.time }]);
+        console.log("client received message:", data.message, data.time, data.from, data.to);
+        setMessages(prev => [...prev, { text: data.message, time: data.time}]);
       }
 
       if (data.type === 'pong') {
@@ -81,14 +81,13 @@ export default function Bchat() {
 
   function sendMessage(info) {
     if (socket.current && message.trim() !== '') {
-      console.log("infooooo is ", info)
-      const data = JSON.stringify({ type: 'message', message: message, id: id });
+      console.log("infooooo is ", info.to ," to ", info.from)
+      const data = JSON.stringify({ type: 'message', message: message, from: info.from, to:info.to});
       console.log("message how ", message);
       socket.current.send(data);
       setMessage('');
     }
   }
-  
   function get_message(event) {
     const msg = event.target.value;
     setMessage(msg);
@@ -123,11 +122,17 @@ export default function Bchat() {
                 />
               </div>
 
-              <div className="absolute top-8% left-2% right-2% bottom-12% overflow-y-auto flex flex-col gap-2">
+              <div className="absolute top-8% left-2% right-2% bottom-12% overflow-y-auto flex flex-col gap-2" style={{
+                    scrollbarWidth: 'thin',
+                    scrollbarColor: '#3BACCE transparent',
+                    msOverflowStyle: 'auto',
+                  }}>
                 {messages.map((m, i) => (
                   <h5
                     key={i}
-                    className="px-3 py-1 text-gray-50 bg-bleu-custom rounded-xl w-fit inline-block "
+                    className={`px-3 py-1 text-gray-50 bg-bleu-custom rounded-xl w-fit inline-block ${
+                      m.from === id ? 'self-end bg-chat-send' : 'self-start bg-chat-revice'
+                    }`}
                   >
                     <span>{m.text}</span>
                     <br />

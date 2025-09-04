@@ -32,7 +32,9 @@ module.exports = {
         'sky-custom1': '#4A808C',
         'bleu-custom': '#3BACCE',
         'bleu-ver'   : '#92C1CB',
-        'bleu-noir':'#305F6B'
+        'bleu-noir':'#305F6B',
+        'chat-send':'#2B9CC8',
+        'chat-revice':'#21A4AE'
       },
       fontFamily: {
         forque: ['FORQUE', 'sans-serif'],

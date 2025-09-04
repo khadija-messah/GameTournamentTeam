@@ -23,18 +23,18 @@ fastify.register(fastifyStatic, {
 const clients = new Map();
 
 
-function add_connection(id, connection)
+function add_connection(from, connection)
 {
-  if(!clients.has(id))
+  if(!clients.has(from))
   {
-    clients.set(id,[])
+    clients.set(from,[])
   }
-  clients.get(id).push(connection); 
+  clients.get(from).push(connection); 
 }
 
 
 function broadcast_all(msg) {
-  const conns = clients.get(msg.id);
+  const conns = clients.get(msg.to);
   if (conns) {
     for (const i of conns) {
       if (i.readyState === i.OPEN) {
@@ -43,7 +43,14 @@ function broadcast_all(msg) {
     }
   }
 }
-
+function find_online(id_to)
+{
+  console.log('--- ', clients.has(id_to))
+  if(clients.has(id_to))
+    console.log("had client rah online : ", id_to)
+  else
+    console.log("la had client offline: ", id_to)
+}
 fastify.register(async function (fastify) {
   fastify.get('/ws/chat', { websocket: true }, (connection, req) => {
     connection.on('message', async (message) => {
@@ -63,13 +70,15 @@ fastify.register(async function (fastify) {
       {
         const data_send = 
         {
-          id:data.id,
+          from:data.from,
+          to:data.to,
           username:'vous',
           time:`${hours}:${minutes}`,
           type:data.type,
           message:data.message
         }
         broadcast_all(data_send)
+        find_online(data.to)
       }
       if(data.type === 'ping')
       {
