@@ -7,7 +7,6 @@ function App() {
   return (
    <div>
     <Home/>
-    {/* <Online/> */}
     <Barre />
     <Bchat/>
     </div>

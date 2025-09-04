@@ -112,10 +112,10 @@ export default function Bchat() {
                 alt='background chat'
               />
               <div className="absolute w-full h-6% top-0.1% bg-bleu-custom/50 z-10 rounded-t-xl hover:shadow-xl transition-all">
-                <h2 className='ml-5% top-15% absolute font-poppins font-semibold w-full h-full text-white'>{name_friend}</h2>
-                <img className=' absolute top-3% h-100%' src='/images/chat/caractere.png' alt='avatar'></img>
+                <h2 className='ml-5% top-15% absolute font-poppins font-semibold w-full h-full text-white'>{name_friend ? name_friend.name : ""}</h2>
+                <img className=' absolute top-3% rounded-3xl h-100%' src={name_friend ? name_friend.image : "/images/chat/lock.png"} alt='avatar'></img>
                 <img
-                  src='/images/chat/icon_friend.png'
+                  src={'/images/chat/icon_friend.png'}
                   alt='icon friend'
                   className='relative top-6% w-2.5% h-80% ml-96.5%'
                 />

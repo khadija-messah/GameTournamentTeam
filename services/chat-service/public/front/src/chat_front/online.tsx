@@ -24,16 +24,27 @@ export default function Online({data_friend, name_friend}) {
     )
 }
 
-export function Get_user({data_friend, name_friend}) {
+export function Get_user({ data_friend, name_friend }) {
     return (
-      <div>
-        {data_friend.map((user, index) =>(
-            <div key={index}>
-                <button onClick={()=>name_friend(user.name.first)}className='hover:shadow'>
-                <img className='ml-40% rounded-full w-70% h-70%' src={user.picture.thumbnail} alt={user.name.first} ></img>
-                <br></br>
-                </button>
-            </div>
+      <div className="flex flex-col items-center gap-4">
+        {data_friend.map((user, index) => (
+          <button
+            key={index}
+            onClick={() =>
+              name_friend({
+                id: user.id,
+                name: user.name.first,
+                image: user.picture.thumbnail
+              })
+            }
+            className="w-60% h-60% rounded-full flex items-center justify-center overflow-hidden hover:drop-shadow-[0_0_10px_white]"
+          >
+            <img
+              className="w-full h-full object-cover rounded-full"
+              src={user.picture.thumbnail}
+              alt={user.name.first}
+            />
+          </button>
         ))}
       </div>
     );
