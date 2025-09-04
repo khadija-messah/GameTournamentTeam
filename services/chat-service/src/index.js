@@ -43,28 +43,7 @@ function broadcast_all(msg) {
     }
   }
 }
-function online_friend(message,id)
-{
-  const friend = JSON.parse(message)
-  const obj = {
-    id:[],
-    image:[],
-    username:[]
-  };
-  let i = 0;
-  friend.friends.users.forEach(u => {
-    if(u.id != id && clients.has(u.id))
-    {
-      obj.id[i] = u.id;
-      obj.image[i] = u.image;
-      obj.username[i] = u.firstName
-      i+=1;
-    }
-    else
-        console.log("frind and id is : ", id,"  ", u.id)
-  });
-  console.log("obj is ", obj)
-}
+
 fastify.register(async function (fastify) {
   fastify.get('/ws/chat', { websocket: true }, (connection, req) => {
     connection.on('message', async (message) => {
@@ -73,14 +52,14 @@ fastify.register(async function (fastify) {
       const hours = now.getHours();
       const minutes = String(now.getMinutes()).padStart(2, '0');
       const data = JSON.parse(message);
-      let save_id;
+      console.log("-----> ", data)
+      let online_friends;
       if(data.type === 'user-info')
       {
-        console.log("size map is ",clients.size)
         add_connection(data.id, connection)
-        save_id = data.id;
+        console.log("size map is ",clients.size)
       }
-      else if(data.type === 'message')
+      if(data.type === 'message')
       {
         const data_send = 
         {
@@ -93,11 +72,8 @@ fastify.register(async function (fastify) {
         broadcast_all(data_send)
       }
       if(data.type === 'ping')
-        connection.send(JSON.stringify({ type: 'pong' }));
-      if(data.type === 'friends-list')
       {
-        console.log("waslo l server liste friend", data.userId)
-        online_friend(message,data.userId)
+        connection.send(JSON.stringify({ type: 'pong'}));
       }
     });
 

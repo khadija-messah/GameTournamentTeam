@@ -1,6 +1,5 @@
 import { useEffect,useState } from 'react'
-import Bchat from './background_chat'
-export default function Online() {
+export default function Online({data_friend, name_friend}) {
     return (
         <div>
             <div
@@ -9,7 +8,7 @@ export default function Online() {
                     scrollbarColor: '#659EAC transparent',
                     msOverflowStyle: 'auto',
                   }}>
-                <Get_user/>
+               <Get_user data_friend = {data_friend} name_friend = {name_friend}/>
             </div>
             <img src='images/chat/icon_online.png' alt="icon online" className=" absolute top-12% mx-4% h-2.5% w-1.5% "></img>
             <div
@@ -18,29 +17,20 @@ export default function Online() {
                     scrollbarColor: '#4D8995 transparent',
                     msOverflowStyle: 'auto',
                   }}>
-                <Get_user/>
+                <Get_user data_friend = {data_friend} name_friend = {name_friend}/>
             </div>
             <img src='images/chat/icon_online.png' alt="icon online" className=" absolute top-12% mx-97% h-2.5% w-1.5%"></img>
         </div>
     )
 }
 
-export function Get_user() {
-    const [users, setUsers] = useState([]);
-    useEffect(()=>{
-        fetch('https://dummyjson.com/users')
-        .then(res => res.json())
-        .then(data=>setUsers(data.users))
-        .catch(error=>console.log(error))
-    },[])
+export function Get_user({data_friend, name_friend}) {
     return (
-        
       <div>
-        {users.map((user, index) =>(
+        {data_friend.map((user, index) =>(
             <div key={index}>
-                <button className='hover:shadow'>
-                <img className='ml-40% rounded-full w-70% h-70%' src={user.image} alt={user.firstName} ></img>
-                <p className="text-center">{user.id}</p>
+                <button onClick={()=>name_friend(user.name.first)}className='hover:shadow'>
+                <img className='ml-40% rounded-full w-70% h-70%' src={user.picture.thumbnail} alt={user.name.first} ></img>
                 <br></br>
                 </button>
             </div>
