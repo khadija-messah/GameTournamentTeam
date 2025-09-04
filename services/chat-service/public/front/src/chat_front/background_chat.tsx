@@ -134,21 +134,24 @@ export default function Bchat() {
                 ))}
               </div>
               <div className="absolute left-2% w-97% h-7% bottom-2% transition-all flex">
-                <input
-                  className='w-full h-full rounded-3xl px-3 hover:shadow-lg opacity-40 placeholder:text-[1vw] focus:outline-none'
-                  value={message}
-                  onChange={get_message}
-                  onKeyDown={(e) => { e.key === 'Enter' && sendMessage() }}
-                  placeholder="Type your message..."
-                />
-                <button onClick={sendMessage}>
-                  <img
-                    className='absolute left-96% top-23% w-3% h-50%'
-                    src='images/chat/send-msg.png'
-                    alt="icon send"
-                  />
-                </button>
-                
+              {name_friend && (
+                  <>
+                    <input
+                      className='w-full h-full rounded-3xl px-3 hover:shadow-lg opacity-40 placeholder:text-[1vw] focus:outline-none'
+                      value={message}
+                      onChange={get_message}
+                      onKeyDown={(e) => { e.key === 'Enter' && sendMessage() }}
+                      placeholder="Type your message..."
+                    />
+                    <button onClick={sendMessage}>
+                      <img
+                        className='absolute left-96% top-23% w-3% h-50%'
+                        src='images/chat/send-msg.png'
+                        alt="icon send"
+                      />
+                    </button>
+                  </>
+                )}
               </div>
             </div>
     </div>
