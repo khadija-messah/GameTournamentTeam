@@ -4,14 +4,10 @@ import cors from '@fastify/cors';
 import fastifyStatic from '@fastify/static';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { PrismaClient } from './generated/prisma/index.js'
-import { time } from 'console';
-
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const connections = new Map();
 const fastify = Fastify();
 
 fastify.register(websocket)
@@ -41,19 +37,25 @@ function broadcast_all(data_send) {
       }
     }
   }
-  console.log("---------------------------------")
+  const fromConns = clients.get(data_send.from);
+  if (fromConns) {
+    for (const i of fromConns) {
+      if (i.readyState === i.OPEN) {
+        i.send(JSON.stringify(data_send));
+      }
+    }
+  }
 }
+
 function find_online(data_send)
 {
   if(clients.has(data_send.to))
   {
-    console.log("client deja online")
     broadcast_all(data_send)
     return true;
   }
   else
   {
-    console.log("khas database")
     return false;
   }
 }
@@ -65,12 +67,10 @@ fastify.register(async function (fastify) {
       const hours = now.getHours();
       const minutes = String(now.getMinutes()).padStart(2, '0');
       const data = JSON.parse(message);
-      console.log("-----> ", data)
       let online_friends;
       if(data.type === 'user-info')
       {
         add_connection(data.id, connection)
-        console.log("size map is ",clients.size)
       }
       if(data.type === 'message')
       {

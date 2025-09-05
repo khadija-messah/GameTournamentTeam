@@ -31,7 +31,6 @@ export default function Bchat() {
           })
             .then((res) => res.json())
             .then((friends) => {
-              console.log("friends response =>", friends);
               setFrieends(friends);
               const payload = {
                 type: "user-info",
@@ -39,7 +38,6 @@ export default function Bchat() {
                 friends 
               };
               socket.current.send(JSON.stringify(payload));
-              console.log("sent user-info with friends", payload);
             })
           })
           .catch(error => console.error("Error fetching data:", error));
@@ -53,20 +51,11 @@ export default function Bchat() {
 
     socket.current.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      console.log('data recive type', data.type);
-
       if (data.type === 'message') {
-        console.log("client received message:", data.message, data.time, data.from, data.to);
-        setMessages(prev => [...prev, { text: data.message, time: data.time}]);
+        setMessages(prev => [...prev, { text: data.message, time: data.time, from:data.from, to:data.to}]);
       }
-
       if (data.type === 'pong') {
-        console.log('Pong received from server ');
         return;
-      }
-
-      if (data.type === 'friend-online') {
-        console.log("friend online => ", data);
       }
     };
 
@@ -78,12 +67,9 @@ export default function Bchat() {
       socket.current.close();
     };
   }, []);
-
   function sendMessage(info) {
     if (socket.current && message.trim() !== '') {
-      console.log("infooooo is ", info.to ," to ", info.from)
       const data = JSON.stringify({ type: 'message', message: message, from: info.from, to:info.to});
-      console.log("message how ", message);
       socket.current.send(data);
       setMessage('');
     }
