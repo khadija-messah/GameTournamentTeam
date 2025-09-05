@@ -49,15 +49,7 @@ function broadcast_all(data_send) {
 
 function find_online(data_send)
 {
-  if(clients.has(data_send.to))
-  {
     broadcast_all(data_send)
-    return true;
-  }
-  else
-  {
-    return false;
-  }
 }
 fastify.register(async function (fastify) {
   fastify.get('/ws/chat', { websocket: true }, (connection, req) => {

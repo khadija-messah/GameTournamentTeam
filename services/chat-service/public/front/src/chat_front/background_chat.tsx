@@ -113,18 +113,24 @@ export default function Bchat() {
                     scrollbarColor: '#3BACCE transparent',
                     msOverflowStyle: 'auto',
                   }}>
-                {messages.map((m, i) => (
-                  <h5
-                    key={i}
-                    className={`px-3 py-1 text-gray-50 bg-bleu-custom rounded-xl w-fit inline-block ${
-                      m.from === id ? 'self-end bg-chat-send' : 'self-start bg-chat-revice'
-                    }`}
-                  >
-                    <span>{m.text}</span>
-                    <br />
-                    <span className="text-xs opacity-70">{m.time}</span>
-                  </h5>
-                ))}
+                {messages
+                  .filter(m => 
+                    (m.from === id && m.to === name_friend?.id) || 
+                    (m.from === name_friend?.id && m.to === id)
+                  )
+                  .map((m, i) => (
+                    <h5
+                      key={i}
+                      className={`px-3 py-1 text-gray-50 rounded-xl w-fit inline-block ${
+                        m.from === id ? 'self-end bg-chat-send' : 'self-start bg-chat-revice'
+                      }`}
+                    >
+                      <span>{m.text}</span>
+                      <br />
+                      <span className="text-xs opacity-70">{m.time}</span>
+                    </h5>
+                  ))}
+
               </div>
               <div className="absolute left-2% w-97% h-7% bottom-2% transition-all flex">
               {name_friend && (

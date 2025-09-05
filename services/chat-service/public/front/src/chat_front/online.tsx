@@ -1,4 +1,3 @@
-import { useEffect,useState } from 'react'
 export default function Online({data_friend, name_friend}) {
     return (
         <div>
