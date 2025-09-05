@@ -51,19 +51,46 @@ function find_online(data_send)
 {
     broadcast_all(data_send)
 }
+function check_online(tab_friend)
+{
+    let friend_online = []
+
+    for(let i = 0; i < tab_friend.length;i++)
+    {
+        if(clients.has(tab_friend[i].id))
+        {
+          friend_online.push({id:tab_friend[i].id, avatar:tab_friend[i].avatar,status:"online", name:tab_friend[i].name})
+        } 
+        else
+        {
+          friend_online.push({id:tab_friend[i].id, avatar:tab_friend[i].avatar,status:"offline", name:tab_friend[i].name})
+        }
+    }
+    return friend_online
+}
 fastify.register(async function (fastify) {
   fastify.get('/ws/chat', { websocket: true }, (connection, req) => {
     connection.on('message', async (message) => {
-
       const now = new Date();
       const hours = now.getHours();
       const minutes = String(now.getMinutes()).padStart(2, '0');
       const data = JSON.parse(message);
-      let online_friends;
-      if(data.type === 'user-info')
-      {
-        add_connection(data.id, connection)
-      }
+      let tab_friend = []
+      if (Array.isArray(data.friends))
+        {
+          data.friends.forEach(element => {
+            tab_friend.push({id:element.id, name:element.name, avatar:element.avatar})
+          });
+        }
+        if(data.type === 'user-info')
+        {
+          add_connection(data.id, connection)
+          connection.userId = data.id;
+        }
+        for (const [id, conns] of clients.entries()) {
+          console.log(`User ${id} has ${conns.length} connection(s).`);
+        }
+      const friend_status = check_online(tab_friend)
       if(data.type === 'message')
       {
         const data_send = 
@@ -84,6 +111,23 @@ fastify.register(async function (fastify) {
     });
 
     connection.on('close', () => {
+      if(connection.userId)
+      {
+        const conx = clients.get(connection.userId)||[]
+        const filter = conx.filter(function (c){
+          return c!== connection
+        })
+        if(filter.length > 0)
+        {
+          console.log("mzl tap mfto7in")
+          clients.set(connection.userId, filter)
+        }
+        else
+        {
+            console.log("mb9at hta tab mfto7a")
+            clients.delete(connection.userId)
+        }
+      }
       console.log('WebSocket connection closed');
     });
     

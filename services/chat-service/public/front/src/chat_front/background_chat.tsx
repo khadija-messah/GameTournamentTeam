@@ -35,7 +35,7 @@ export default function Bchat() {
               const payload = {
                 type: "user-info",
                 ...data,
-                friends 
+                friends
               };
               socket.current.send(JSON.stringify(payload));
             })
