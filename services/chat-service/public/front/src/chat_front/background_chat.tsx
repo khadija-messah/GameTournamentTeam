@@ -57,6 +57,10 @@ export default function Bchat() {
       if (data.type === 'pong') {
         return;
       }
+      if(data.type === 'status')
+      {
+        console.log("kyn update f online", data)
+      }
     };
 
     socket.current.onclose = () => console.log('disconnected from the server');

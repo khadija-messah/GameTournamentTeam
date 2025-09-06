@@ -46,11 +46,18 @@ function broadcast_all(data_send) {
     }
   }
 }
-
-function find_online(data_send)
+function broadcast_status_friend(id, status,flag)
 {
-    broadcast_all(data_send)
+  const conns = clients.get(id);
+  if (conns) {
+    for (const i of conns) {
+      if (i.readyState === i.OPEN) {
+        i.send(JSON.stringify({type:"status",status}));
+      }
+    }
+  }
 }
+
 function check_online(tab_friend)
 {
     let friend_online = []
@@ -59,15 +66,20 @@ function check_online(tab_friend)
     {
         if(clients.has(tab_friend[i].id))
         {
-          friend_online.push({id:tab_friend[i].id, avatar:tab_friend[i].avatar,status:"online", name:tab_friend[i].name})
-        } 
-        else
-        {
-          friend_online.push({id:tab_friend[i].id, avatar:tab_friend[i].avatar,status:"offline", name:tab_friend[i].name})
+          if (!friend_online.some(f => f.id === tab_friend[i].id)) {
+            friend_online.push({
+                id: tab_friend[i].id,
+                avatar: tab_friend[i].avatar,
+                name: tab_friend[i].name
+            });
+          }
         }
     }
     return friend_online
 }
+let tab_friend = []
+let id_f;
+let id_t;
 fastify.register(async function (fastify) {
   fastify.get('/ws/chat', { websocket: true }, (connection, req) => {
     connection.on('message', async (message) => {
@@ -75,22 +87,27 @@ fastify.register(async function (fastify) {
       const hours = now.getHours();
       const minutes = String(now.getMinutes()).padStart(2, '0');
       const data = JSON.parse(message);
-      let tab_friend = []
       if (Array.isArray(data.friends))
         {
           data.friends.forEach(element => {
-            tab_friend.push({id:element.id, name:element.name, avatar:element.avatar})
+            if (!tab_friend.some(f => f.id === element.id)) {
+              tab_friend.push({ id: element.id, name: element.name, avatar: element.avatar });
+            }
           });
         }
         if(data.type === 'user-info')
-        {
-          add_connection(data.id, connection)
-          connection.userId = data.id;
-        }
+          {
+            add_connection(data.id, connection)
+            connection.userId = data.id;
+            id_f = data.id
+            const friend_status = check_online(tab_friend)
+            tab_friend.forEach(friend => {
+              broadcast_status_friend(friend.id, friend_status, 1);
+            });
+          }
         for (const [id, conns] of clients.entries()) {
           console.log(`User ${id} has ${conns.length} connection(s).`);
         }
-      const friend_status = check_online(tab_friend)
       if(data.type === 'message')
       {
         const data_send = 
@@ -102,7 +119,9 @@ fastify.register(async function (fastify) {
           type:data.type,
           message:data.message
         }
-        find_online(data_send)
+        id_f = data.from
+        id_t = data.to
+        broadcast_all(data_send)
       }
       if(data.type === 'ping')
       {
@@ -118,16 +137,14 @@ fastify.register(async function (fastify) {
           return c!== connection
         })
         if(filter.length > 0)
-        {
-          console.log("mzl tap mfto7in")
           clients.set(connection.userId, filter)
-        }
         else
-        {
-            console.log("mb9at hta tab mfto7a")
             clients.delete(connection.userId)
-        }
       }
+      const friend_status = check_online(tab_friend)
+      tab_friend.forEach(friend => {
+        broadcast_status_friend(friend.id, friend_status, 2);
+      });
       console.log('WebSocket connection closed');
     });
     
