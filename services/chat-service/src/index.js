@@ -117,18 +117,19 @@ fastify.register(async function (fastify) {
         if (filter.length > 0)
           clients.set(connection.userId, filter);
         else
+        {
           clients.delete(connection.userId);
-    
-        const offline_user = tab_friend.find(f => f.id === connection.userId);
-        if (offline_user) {
-          tab_friend.forEach(friend => {
-            if (clients.has(friend.id)) {
-              const friendConns = clients.get(friend.id) || [];
-              for (const conn of friendConns) {
-                conn.send(JSON.stringify({ type: "status", offline: [offline_user] }));
+          const offline_user = tab_friend.find(f => f.id === connection.userId);
+          if (offline_user) {
+            tab_friend.forEach(friend => {
+              if (clients.has(friend.id)) {
+                const friendConns = clients.get(friend.id) || [];
+                for (const conn of friendConns) {
+                  conn.send(JSON.stringify({ type: "status", offline: [offline_user] }));
+                }
               }
-            }
-          });
+            });
+          }
         }
       }
     });
