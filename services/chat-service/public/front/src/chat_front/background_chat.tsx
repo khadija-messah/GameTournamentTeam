@@ -31,7 +31,7 @@ export default function Bchat() {
           })
             .then((res) => res.json())
             .then((friends) => {
-              setFrieends(friends);
+              console.log("fetch friend ",friends)
               const payload = {
                 type: "user-info",
                 ...data,
@@ -57,10 +57,13 @@ export default function Bchat() {
       if (data.type === 'pong') {
         return;
       }
-      if(data.type === 'status')
-      {
-        console.log("kyn update f online", data)
-      }
+      
+      if (data.type === 'status') {
+        console.log("user ", data.online)
+        console.log("jat status jdida : ", data);
+        setFrieends(data.online);
+    }
+    
     };
 
     socket.current.onclose = () => console.log('disconnected from the server');

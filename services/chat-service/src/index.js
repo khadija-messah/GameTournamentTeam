@@ -46,15 +46,14 @@ function broadcast_all(data_send) {
     }
   }
 }
-function broadcast_status_friend(id, status,flag)
+function broadcast_status_friend(online)
 {
-  const conns = clients.get(id);
-  if (conns) {
-    for (const i of conns) {
-      if (i.readyState === i.OPEN) {
-        i.send(JSON.stringify({type:"status",status}));
+  for(const [key,conn] of clients.entries())
+  {
+      for(let j = 0; j < conn.length;j++)
+      {
+        conn[j].send(JSON.stringify({type:"status",online}));
       }
-    }
   }
 }
 
@@ -77,11 +76,10 @@ function check_online(tab_friend)
     }
     return friend_online
 }
-let tab_friend = []
 let id_f;
-let id_t;
 fastify.register(async function (fastify) {
   fastify.get('/ws/chat', { websocket: true }, (connection, req) => {
+    let tab_friend = []
     connection.on('message', async (message) => {
       const now = new Date();
       const hours = now.getHours();
@@ -90,23 +88,18 @@ fastify.register(async function (fastify) {
       if (Array.isArray(data.friends))
         {
           data.friends.forEach(element => {
-            if (!tab_friend.some(f => f.id === element.id)) {
-              tab_friend.push({ id: element.id, name: element.name, avatar: element.avatar });
-            }
+            tab_friend.push({id:element.id, name:element.name, avatar:element.avatar})
           });
         }
         if(data.type === 'user-info')
-          {
-            add_connection(data.id, connection)
-            connection.userId = data.id;
-            id_f = data.id
-            const friend_status = check_online(tab_friend)
-            tab_friend.forEach(friend => {
-              broadcast_status_friend(friend.id, friend_status, 1);
-            });
-          }
-        for (const [id, conns] of clients.entries()) {
-          console.log(`User ${id} has ${conns.length} connection(s).`);
+        {
+          console.log("data id is : ", data.id)
+          add_connection(data.id, connection)
+          connection.userId = data.id;
+          id_f = data.id
+          const friend_status = check_online(tab_friend)
+          console.log("hado li online ", friend_status)
+          broadcast_status_friend(friend_status)
         }
       if(data.type === 'message')
       {
@@ -119,8 +112,6 @@ fastify.register(async function (fastify) {
           type:data.type,
           message:data.message
         }
-        id_f = data.from
-        id_t = data.to
         broadcast_all(data_send)
       }
       if(data.type === 'ping')
@@ -142,10 +133,7 @@ fastify.register(async function (fastify) {
             clients.delete(connection.userId)
       }
       const friend_status = check_online(tab_friend)
-      tab_friend.forEach(friend => {
-        broadcast_status_friend(friend.id, friend_status, 2);
-      });
-      console.log('WebSocket connection closed');
+      broadcast_status_friend(friend_status)
     });
     
   });
