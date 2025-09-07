@@ -58,12 +58,16 @@ export default function Bchat() {
         return;
       }
       
-      if (data.type === 'status') {
-        console.log("user ", data.online)
-        console.log("jat status jdida : ", data);
-        setFrieends(data.online);
-    }
-    
+      if (data.type === "status") {
+        if (data.online) {
+          setFrieends(data.online);
+        }
+        if (data.offline) {
+          setFrieends(prev => 
+            prev.filter(f => !data.offline.some(off => off.id === f.id))
+          );
+        }
+      }
     };
 
     socket.current.onclose = () => console.log('disconnected from the server');

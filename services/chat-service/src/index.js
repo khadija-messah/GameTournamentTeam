@@ -46,37 +46,29 @@ function broadcast_all(data_send) {
     }
   }
 }
-function broadcast_status_friend(online)
-{
-  for(const [key,conn] of clients.entries())
-  {
-      for(let j = 0; j < conn.length;j++)
-      {
-        conn[j].send(JSON.stringify({type:"status",online}));
-      }
-  }
-}
 
-function check_online(tab_friend)
+function check_online_for_all(tab_friend, userId)
 {
-    let friend_online = []
+    const friend_online = tab_friend.filter(f=> clients.has(f.id) && f.id !== userId)
+    const for_me = clients.get(userId) || []
 
-    for(let i = 0; i < tab_friend.length;i++)
+    for(const i of for_me)
     {
-        if(clients.has(tab_friend[i].id))
-        {
-          if (!friend_online.some(f => f.id === tab_friend[i].id)) {
-            friend_online.push({
-                id: tab_friend[i].id,
-                avatar: tab_friend[i].avatar,
-                name: tab_friend[i].name
-            });
-          }
-        }
+      i.send(JSON.stringify({type:"status", online: friend_online}));
     }
-    return friend_online
+
+    const send_to_friend = tab_friend.find(f=>f.id === userId && clients.has(f.id)) ||null
+    if(send_to_friend)
+    {
+      friend_online.forEach(friend => {
+        const friendConns = clients.get(friend.id) || [];
+        for (const conn of friendConns) {
+          conn.send(JSON.stringify({ type: "status", online: [send_to_friend] }));
+        }
+      })
+    }
 }
-let id_f;
+
 fastify.register(async function (fastify) {
   fastify.get('/ws/chat', { websocket: true }, (connection, req) => {
     let tab_friend = []
@@ -94,12 +86,9 @@ fastify.register(async function (fastify) {
         if(data.type === 'user-info')
         {
           console.log("data id is : ", data.id)
-          add_connection(data.id, connection)
           connection.userId = data.id;
-          id_f = data.id
-          const friend_status = check_online(tab_friend)
-          console.log("hado li online ", friend_status)
-          broadcast_status_friend(friend_status)
+          add_connection(data.id, connection)
+          check_online_for_all(tab_friend,data.id)
         }
       if(data.type === 'message')
       {
@@ -121,19 +110,27 @@ fastify.register(async function (fastify) {
     });
 
     connection.on('close', () => {
-      if(connection.userId)
-      {
-        const conx = clients.get(connection.userId)||[]
-        const filter = conx.filter(function (c){
-          return c!== connection
-        })
-        if(filter.length > 0)
-          clients.set(connection.userId, filter)
+      if (connection.userId) {
+        const conx = clients.get(connection.userId) || [];
+        const filter = conx.filter(c => c !== connection);
+    
+        if (filter.length > 0)
+          clients.set(connection.userId, filter);
         else
-            clients.delete(connection.userId)
+          clients.delete(connection.userId);
+    
+        const offline_user = tab_friend.find(f => f.id === connection.userId);
+        if (offline_user) {
+          tab_friend.forEach(friend => {
+            if (clients.has(friend.id)) {
+              const friendConns = clients.get(friend.id) || [];
+              for (const conn of friendConns) {
+                conn.send(JSON.stringify({ type: "status", offline: [offline_user] }));
+              }
+            }
+          });
+        }
       }
-      const friend_status = check_online(tab_friend)
-      broadcast_status_friend(friend_status)
     });
     
   });
