@@ -4,6 +4,9 @@ import cors from '@fastify/cors';
 import fastifyStatic from '@fastify/static';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
