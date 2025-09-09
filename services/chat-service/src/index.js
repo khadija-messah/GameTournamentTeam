@@ -77,7 +77,7 @@ fastify.register(async function (fastify) {
     let tab_friend = []
     connection.on('message', async (message) => {
       const now = new Date();
-      const hours = now.getHours();
+      const hours = String(now.getHours()).padStart(2, '0');
       const minutes = String(now.getMinutes()).padStart(2, '0');
       const data = JSON.parse(message);
       if (Array.isArray(data.friends))
@@ -95,16 +95,47 @@ fastify.register(async function (fastify) {
         }
       if(data.type === 'message')
       {
+        const fromId = Number(typeof data.from === 'object' ? data.from.id : data.from);
+        const toId = Number(typeof data.to === 'object' ? data.to.id : data.to);
+        const fromName = typeof data.from === 'object' && data.from.name ? data.from.name : String(fromId);
+        const toName = typeof data.to === 'object' && data.to.name ? data.to.name : String(toId);
+
         const data_send = 
         {
-          from:data.from,
-          to:data.to,
+          from: fromId,
+          to: toId,
           username:'vous',
           time:`${hours}:${minutes}`,
           type:data.type,
           message:data.message
         }
         broadcast_all(data_send)
+        try{
+            await Promise.all([
+              prisma.user.upsert({
+                where: { id: fromId },
+                update: { name: fromName },
+                create: { id: fromId, name: fromName }
+              }),
+              prisma.user.upsert({
+                where: { id: toId },
+                update: { name: toName },
+                create: { id: toId, name: toName }
+              })
+            ]);
+            await prisma.message.create({
+              data:{
+                text:data.message,
+                time: now,
+                fromId: fromId,
+                toId: toId
+              }
+            })
+        }
+        catch(err)
+        {
+          console.log("error database : ", err)
+        }
       }
       if(data.type === 'ping')
       {
@@ -138,6 +169,28 @@ fastify.register(async function (fastify) {
     });
     
   });
+  fastify.get('/api/messages/:userId', async (request, reply) => {
+    const userId = parseInt(request.params.userId);
+    
+    try {
+      const messages = await prisma.message.findMany({
+        where: {
+          OR: [
+            { fromId: userId },
+            { toId: userId }
+          ]
+        },
+        orderBy: {
+          time: 'asc'
+        }
+      });
+      reply.send(messages);
+    } catch (error) {
+      console.error("Error fetching messages:", error);
+      reply.status(500).send({ error: "Cannot fetch messages" });
+    }
+  });
+  
 });
 const start = async () => {
   try {
