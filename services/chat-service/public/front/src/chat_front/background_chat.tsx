@@ -12,6 +12,7 @@ export default function Bchat() {
   const [friend, setFriends] = useState([]);
   const [active, setActive] = useState(false);
   const [nameFriend, setNameFriend] = useState(null);
+  const [blocked,setBlocked] = useState(null)
 
   useEffect(() => {
     socket.current = new WebSocket('ws://localhost:8002/ws/chat');
@@ -62,18 +63,15 @@ export default function Bchat() {
 
     socket.current.onmessage = (event) => {
       const data = JSON.parse(event.data);
-
       if (data.type === 'message') {
-        const fromId = typeof data.from === 'object' ? Number(data.from?.id) : Number(data.from);
-        const toId = typeof data.to === 'object' ? Number(data.to?.id) : Number(data.to);
         setMessages(prev => [...prev, {
           text: data.message,
           time: data.time,
-          from: fromId,
-          to: toId,
+          from: Number(data.from),
+          to: Number(data.to),
         }]);
       }
-
+      
       if (data.type === 'pong') return;
 
       if (data.type === "status") {

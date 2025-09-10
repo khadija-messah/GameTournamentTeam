@@ -1,9 +1,7 @@
-import Bchat from './background_chat';
 import { useEffect, useState, type ChangeEvent } from 'react';
 export default function Barre() 
 {
     const [inputV,setinput]  = useState("")
-    const[chat,setchat] = useState(false)
     function get_input(event: ChangeEvent<HTMLInputElement>)
     {
         setinput(event.target.value)
@@ -13,10 +11,6 @@ export default function Barre()
     function change_block()
     {
       setBlock(!block)
-    }
-    function change_chat()
-    {
-      setchat(!chat)
     }
     return (
         <div>

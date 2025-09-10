@@ -13,165 +13,158 @@ const __dirname = path.dirname(__filename);
 
 const fastify = Fastify();
 
-fastify.register(websocket)
+fastify.register(websocket);
 fastify.register(cors, { origin: '*' });
 
 fastify.register(fastifyStatic, {
   root: path.join(__dirname, '..', '/public'),
 });
+
 const clients = new Map();
+const userFriends = new Map();
 
-
-function add_connection(from, connection)
-{
-  if(!clients.has(from))
-  {
-    clients.set(from,[])
-  }
-  clients.get(from).push(connection); 
+function add_connection(userId, connection) {
+  if (!clients.has(userId)) clients.set(userId, []);
+  clients.get(userId).push(connection);
 }
 
-function broadcast_all(data_send) {
-  const conns = clients.get(data_send.to);
-  if (conns) {
-    for (const i of conns) {
-      if (i.readyState === i.OPEN) {
-        i.send(JSON.stringify(data_send));
-      }
-    }
-  }
-  const fromConns = clients.get(data_send.from);
-  if (fromConns) {
-    for (const i of fromConns) {
-      if (i.readyState === i.OPEN) {
-        i.send(JSON.stringify(data_send));
-      }
-    }
+function remove_connection(userId, connection) {
+  if (!clients.has(userId)) return;
+  const remaining = clients.get(userId).filter(c => c !== connection);
+  if (remaining.length > 0) {
+    clients.set(userId, remaining);
+  } else {
+    clients.delete(userId);
+    broadcast_offline(userId);
   }
 }
 
-function check_online_for_all(tab_friend, userId)
-{
-    const friend_online = tab_friend.filter(f=> clients.has(f.id) && f.id !== userId)
-    const for_me = clients.get(userId) || []
-
-    for(const i of for_me)
-    {
-      i.send(JSON.stringify({type:"status", online: friend_online}));
-    }
-
-    const send_to_friend = tab_friend.find(f=>f.id === userId && clients.has(f.id)) ||null
-    if(send_to_friend)
-    {
-      friend_online.forEach(friend => {
-        const friendConns = clients.get(friend.id) || [];
-        for (const conn of friendConns) {
-          conn.send(JSON.stringify({ type: "status", online: [send_to_friend] }));
-        }
-      })
-    }
+function set_user_friends(userId, friends) {
+  userFriends.set(userId, friends);
 }
 
+function broadcast_online(userId) {
+  const friends = userFriends.get(userId) || [];
+  const online_friends = friends.filter(f => clients.has(f.id));
+
+  const userConns = clients.get(userId) || [];
+  userConns.forEach(conn => {
+    conn.send(JSON.stringify({ type: "status", online: online_friends }));
+  });
+
+  online_friends.forEach(friend => {
+    const friendConns = clients.get(friend.id) || [];
+    friendConns.forEach(conn => {
+      const friendList = (userFriends.get(friend.id) || []).filter(f => clients.has(f.id) && f.id !== friend.id);
+      conn.send(JSON.stringify({ type: "status", online: friendList }));
+    });
+  });
+}
+
+function broadcast_offline(userId) {
+  const friends = userFriends.get(userId) || [];
+  friends.forEach(friend => {
+    if (clients.has(friend.id)) {
+      const friendConns = clients.get(friend.id);
+      friendConns.forEach(conn => {
+        conn.send(JSON.stringify({ type: "status", offline: [{ id: userId }] }));
+      });
+    }
+  });
+}
+function broadcast_all(data_send) 
+{ 
+  const conns = clients.get(data_send.to); 
+  if (conns) 
+  { 
+    for (const i of conns) 
+      { if (i.readyState === i.OPEN) 
+        { 
+          i.send(JSON.stringify(data_send)); 
+        } 
+      } 
+  } 
+  const fromConns = clients.get(data_send.from); 
+  if (fromConns) 
+    { 
+      for (const i of fromConns) 
+        { 
+          if (i.readyState === i.OPEN) 
+            { 
+              i.send(JSON.stringify(data_send)); 
+            } 
+        } 
+    } 
+}
 fastify.register(async function (fastify) {
   fastify.get('/ws/chat', { websocket: true }, (connection, req) => {
-    let tab_friend = []
     connection.on('message', async (message) => {
       const now = new Date();
       const hours = String(now.getHours()).padStart(2, '0');
       const minutes = String(now.getMinutes()).padStart(2, '0');
-      const data = JSON.parse(message);
-      if (Array.isArray(data.friends))
-        {
-          data.friends.forEach(element => {
-            tab_friend.push({id:element.id, name:element.name, avatar:element.avatar})
-          });
-        }
-        if(data.type === 'user-info')
-        {
-          console.log("data id is : ", data.id)
-          connection.userId = data.id;
-          add_connection(data.id, connection)
-          check_online_for_all(tab_friend,data.id)
-        }
-      if(data.type === 'message')
-      {
-        const fromId = Number(typeof data.from === 'object' ? data.from.id : data.from);
-        const toId = Number(typeof data.to === 'object' ? data.to.id : data.to);
-        const fromName = typeof data.from === 'object' && data.from.name ? data.from.name : String(fromId);
-        const toName = typeof data.to === 'object' && data.to.name ? data.to.name : String(toId);
 
-        const data_send = 
-        {
+      const data = JSON.parse(message);
+
+      if (Array.isArray(data.friends)) {
+        set_user_friends(data.id, data.friends);
+      }
+
+      if (data.type === 'user-info') {
+        connection.userId = data.id;
+        add_connection(data.id, connection);
+        broadcast_online(data.id);
+      }
+
+      if (data.type === 'message') {
+        const fromId = data.from;
+        const toId = data.to;
+        const data_send = {
+          type: data.type,
           from: fromId,
           to: toId,
-          username:'vous',
-          time:`${hours}:${minutes}`,
-          type:data.type,
-          message:data.message
-        }
-        broadcast_all(data_send)
-        try{
-            await Promise.all([
-              prisma.user.upsert({
-                where: { id: fromId },
-                update: { name: fromName },
-                create: { id: fromId, name: fromName }
-              }),
-              prisma.user.upsert({
-                where: { id: toId },
-                update: { name: toName },
-                create: { id: toId, name: toName }
-              })
-            ]);
-            await prisma.message.create({
-              data:{
-                text:data.message,
-                time: now,
-                fromId: fromId,
-                toId: toId
-              }
+          message: data.message,
+          time: `${hours}:${minutes}`,
+        };
+        broadcast_all(data_send);
+        try {
+          await Promise.all([
+            prisma.user.upsert({
+              where: { id: fromId },
+              update: { name: String(fromId) },
+              create: { id: fromId, name: String(fromId) }
+            }),
+            prisma.user.upsert({
+              where: { id: toId },
+              update: { name: String(toId) },
+              create: { id: toId, name: String(toId) }
             })
-        }
-        catch(err)
-        {
-          console.log("error database : ", err)
+          ]);
+
+          await prisma.message.create({
+            data: {
+              text: data.message,
+              time: now,
+              fromId,
+              toId
+            }
+          });
+        } catch(err) {
+          console.log("Database error:", err);
         }
       }
-      if(data.type === 'ping')
-      {
-        connection.send(JSON.stringify({ type: 'pong'}));
+
+      if (data.type === 'ping') {
+        connection.send(JSON.stringify({ type: 'pong' }));
       }
     });
 
     connection.on('close', () => {
-      if (connection.userId) {
-        const conx = clients.get(connection.userId) || [];
-        const filter = conx.filter(c => c !== connection);
-    
-        if (filter.length > 0)
-          clients.set(connection.userId, filter);
-        else
-        {
-          clients.delete(connection.userId);
-          const offline_user = tab_friend.find(f => f.id === connection.userId);
-          if (offline_user) {
-            tab_friend.forEach(friend => {
-              if (clients.has(friend.id)) {
-                const friendConns = clients.get(friend.id) || [];
-                for (const conn of friendConns) {
-                  conn.send(JSON.stringify({ type: "status", offline: [offline_user] }));
-                }
-              }
-            });
-          }
-        }
-      }
+      if (connection.userId) remove_connection(connection.userId, connection);
     });
-    
   });
+
   fastify.get('/api/messages/:userId', async (request, reply) => {
     const userId = parseInt(request.params.userId);
-    
     try {
       const messages = await prisma.message.findMany({
         where: {
@@ -180,9 +173,7 @@ fastify.register(async function (fastify) {
             { toId: userId }
           ]
         },
-        orderBy: {
-          time: 'asc'
-        }
+        orderBy: { time: 'asc' }
       });
       reply.send(messages);
     } catch (error) {
@@ -190,12 +181,13 @@ fastify.register(async function (fastify) {
       reply.status(500).send({ error: "Cannot fetch messages" });
     }
   });
-  
 });
+
 const start = async () => {
   try {
     const port = process.env.PORT || 8002;
     await fastify.listen({ port: port, host: '0.0.0.0' });
+    console.log(`Server running on port ${port}`);
   } catch (err) {
     fastify.log.error(err);
     process.exit(1);
