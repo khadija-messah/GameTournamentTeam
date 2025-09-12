@@ -37,14 +37,14 @@ export function Get_user({ data_friend, name_friend }) {
               name_friend({
                 id: user.id,
                 name: user.name,
-                image: user.avatar
+                image: user.image
               })
             }
             className="w-60% h-60% rounded-full flex items-center justify-center overflow-hidden hover:drop-shadow-[0_0_10px_white]"
           >
             <img
               className="w-full h-full object-cover rounded-full"
-              src={user.avatar || '/images/chat/default-avatar.png'}
+              src={user.image || '/images/chat/default-avatar.png'}
               alt={user.name}
             />
           </button>

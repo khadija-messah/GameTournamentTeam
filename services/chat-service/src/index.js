@@ -160,6 +160,22 @@ fastify.get('/api/messages/:userId', async (req, reply) => {
   }
 });
 
+fastify.get('/api/blocked/:id', async (req, reply) => {
+  try {
+    const cookie = req.headers.cookie || '';
+    const userServiceUrl = process.env.USER_SERVICE_URL || 'http://localhost:8001';
+    const res = await fetch(`${userServiceUrl}/api/friends/rel/${req.params.id}`, {
+      headers: { cookie },
+    });
+    if (!res.ok) return reply.status(res.status).send({ error: 'Cannot fetch blocked users' });
+    const data = await res.json();
+    console.log("data blocked is ", data)
+    reply.send(data);
+  } catch (err) {
+    console.error(err);
+    reply.status(500).send({ error: 'Server error fetching blocked users' });
+  }
+});
 
 fastify.register(async function (fastify){
   fastify.get('/ws/chat', { websocket: true }, (connection) => {

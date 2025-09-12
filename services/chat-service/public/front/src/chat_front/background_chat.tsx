@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import BChat from '../src-image/backg_chat.png';
 import Online from './online';
+import Barre from './barre_friend'
 
 export default function Bchat() {
   const socket = useRef(null);
@@ -11,7 +12,7 @@ export default function Bchat() {
   const [friends, setFriends] = useState([]);
   const [active, setActive] = useState(false);
   const [nameFriend, setNameFriend] = useState(null);
-
+  const [isBlocked, setIsBlocked] = useState(false);
   useEffect(() => {
     socket.current = new WebSocket('ws://localhost:8002/ws/chat');
     socket.current.onopen = async () => {
@@ -35,7 +36,6 @@ export default function Bchat() {
         const friendsList = await resFriends.json();
         console.log("friend is : ", friendsList)
         setFriends(friendsList);
-
         socket.current.send(JSON.stringify({ type: 'user-info', ...user, friends: friendsList }));
 
         const resHistory = await fetch(`http://localhost:8002/api/messages/${user.id}`);
@@ -92,9 +92,24 @@ export default function Bchat() {
     };
   }, []);
 
-  function sendMessage(info) {
-    if (socket.current && message.trim() !== '') {
+  async function sendMessage(info) {
+    if (socket.current && message.trim() !== '') 
+    {
       const data = JSON.stringify({ type: 'message', message: message, from: info.from, to: info.to });
+      const resBlocked = await fetch(`http://localhost:8002/api/blocked/${info.to}`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+      const blockedsList = await resBlocked.json();
+      if(blockedsList.status === 'blocked')
+      {
+        setIsBlocked(true);
+        return 
+      }
+      else {
+        setIsBlocked(false);
+      }
+      console.log("blocked is : ", blockedsList.status)
       socket.current.send(data);
       setMessage('');
     }
@@ -109,6 +124,7 @@ export default function Bchat() {
           </button>
         )}
         {active && <Online data_friend={friends} name_friend={setNameFriend} />}
+        <Barre friend={friends} onSelectFriend={setNameFriend} />
       </div>
 
       <div className="absolute w-65% h-82% top-14% left-28% m-0.1%">
@@ -142,6 +158,11 @@ export default function Bchat() {
         <div className="absolute left-2% w-97% h-7% bottom-2% transition-all flex">
           {nameFriend && (
             <>
+              {isBlocked && (
+                <div className="absolute -top-90% left-1%  bg-teal-500 text-fuchsia-50 px-4 py-2 rounded-lg shadow-lg">
+                  User blocked. You cannot send messages to this user.
+                </div>
+              )}
               <input
                 className='w-full h-full rounded-3xl px-3 hover:shadow-lg opacity-40 placeholder:text-[1vw] focus:outline-none'
                 value={message}
