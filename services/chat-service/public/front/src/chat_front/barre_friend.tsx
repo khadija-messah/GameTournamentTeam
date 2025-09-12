@@ -1,4 +1,4 @@
-import { useEffect, useState, type ChangeEvent } from 'react';
+import {useState, type ChangeEvent } from 'react';
 export default function Barre({friend,onSelectFriend}) 
 {
     const [inputV,setinput]  = useState("")
@@ -34,7 +34,7 @@ export default function Barre({friend,onSelectFriend})
                     scrollbarColor: '#4D8995 transparent',
                     msOverflowStyle: 'auto',
                   }}>
-            {fiendl && <Get_listfriend friends={friend} onSelectFriend={onSelectFriend} />}
+            {fiendl && <GetListFriend friends={friend} onSelectFriend={onSelectFriend} />}
 
           </div>
         </div>
@@ -42,7 +42,7 @@ export default function Barre({friend,onSelectFriend})
     );
   }
 
-function Get_listfriend({friends, onSelectFriend}) {
+function GetListFriend({friends, onSelectFriend}) {
   return (
     <div>
       {friends.map((user, index) => (

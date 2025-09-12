@@ -7,7 +7,7 @@ export default function Online({data_friend, name_friend}) {
                     scrollbarColor: '#659EAC transparent',
                     msOverflowStyle: 'auto',
                   }}>
-               <Get_user data_friend = {data_friend} name_friend = {name_friend}/>
+               <GetUser data_friend = {data_friend} name_friend = {name_friend}/>
             </div>
             <img src='images/chat/icon_online.png' alt="icon online" className=" absolute top-12% mx-4% h-2.5% w-1.5% "></img>
             <div
@@ -16,14 +16,14 @@ export default function Online({data_friend, name_friend}) {
                     scrollbarColor: '#4D8995 transparent',
                     msOverflowStyle: 'auto',
                   }}>
-                <Get_user data_friend = {data_friend} name_friend = {name_friend}/>
+                <GetUser data_friend = {data_friend} name_friend = {name_friend}/>
             </div>
             <img src='images/chat/icon_online.png' alt="icon online" className=" absolute top-12% mx-97% h-2.5% w-1.5%"></img>
         </div>
     )
 }
 
-export function Get_user({ data_friend, name_friend }) {
+export function GetUser({ data_friend, name_friend }) {
     if (!Array.isArray(data_friend)){
         console.log("map khawian")
         return null;
