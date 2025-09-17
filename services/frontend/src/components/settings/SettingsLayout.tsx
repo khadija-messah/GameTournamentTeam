@@ -8,18 +8,19 @@ import { FriendsSettings } from './FriendsSettings';
 import { AchievementSettings } from './AchievementSettings';
 import { MatchHistory } from './MatchHistory';
 import { OverviewSettings} from './OverviewSettings';
+import { SecuritySettings } from './SecuritySettings';
 import { Sidebar } from "./Sidebar";
 
 interface SettingsLayoutProps {
-  defaultTab?: 'profile' | 'friends' | 'achievements' | 'matchHistory' | 'overview';
+  defaultTab?: 'profile' | 'friends' | 'achievements' | 'matchHistory' | 'overview' | 'security';
 }
 
 export const SettingsLayout: ComponentFunction<SettingsLayoutProps> = (props) => {
   const { defaultTab = 'matchHistory' } = props || {};
-  const [activeTab, setActiveTab] = useState<'profile'|'friends'|'achievements'|'matchHistory'|'overview'>(defaultTab);
+  const [activeTab, setActiveTab] = useState<'profile'|'friends'|'achievements'|'matchHistory'|'overview'|'security'>(defaultTab);
   const [updateAll, setUpdateAll] = useState(false);
   const [profileData, setProfileData] = useState({
-    name: 'Loading...',
+    name: '',
     email: '',
     birthday: '',
     location: '',
@@ -30,10 +31,8 @@ export const SettingsLayout: ComponentFunction<SettingsLayoutProps> = (props) =>
     setActiveTab(defaultTab);
   }, [defaultTab]);
 
- 
   useEffect(() => {
-    if (updateAll) 
-      {
+    if (updateAll) {
       const timer = setTimeout(() => {
         setUpdateAll(false);
       }, 100);
@@ -42,21 +41,34 @@ export const SettingsLayout: ComponentFunction<SettingsLayoutProps> = (props) =>
     }
   }, [updateAll]);
 
-  const renderTab = () => {
-    switch (activeTab) {
-      case 'profile':      return <ProfileSettings setUpdateAll={setUpdateAll} profileData={profileData} />;
-      case 'friends':      return <FriendsSettings />;
-      case 'matchHistory':  return <MatchHistory />;
-      case 'overview':      return <OverviewSettings />;
-      default:             return null;
-    }
-  };
+  const renderAllTabs = () => (
+    <div>
+      <div className={`transition-opacity duration-200 ${activeTab === 'profile' ? 'opacity-100' : 'opacity-0 absolute invisible'}`}>
+        <ProfileSettings setUpdateAll={setUpdateAll} profileData={profileData} />
+      </div>
+      
+      <div className={`transition-opacity duration-200 ${activeTab === 'friends' ? 'opacity-100' : 'opacity-0 absolute invisible'}`}>
+        <FriendsSettings />
+      </div>
+      
+      <div className={`transition-opacity duration-200 ${activeTab === 'matchHistory' ? 'opacity-100' : 'opacity-0 absolute invisible'}`}>
+        <MatchHistory />
+      </div>
+      
+      <div className={`transition-opacity duration-200 ${activeTab === 'overview' ? 'opacity-100' : 'opacity-0 absolute invisible'}`}>
+        <OverviewSettings />
+      </div>
+      
+      <div className={`transition-opacity duration-200 ${activeTab === 'security' ? 'opacity-100' : 'opacity-0 absolute invisible'}`}>
+        <SecuritySettings />
+      </div>
+    </div>
+  );
 
   const handleTabClick = (tab: typeof activeTab, e: Event) => {
     e.preventDefault();
     setActiveTab(tab);
-    window.history.pushState({}, '', `/settings/${tab}`);
-    window.dispatchEvent(new PopStateEvent('popstate'));
+    window.history.replaceState({}, '', `/settings/${tab}`);
   };
 
   return (
@@ -79,6 +91,7 @@ export const SettingsLayout: ComponentFunction<SettingsLayoutProps> = (props) =>
           >
             <span className="font-luckiest text-sm pt-2 whitespace-nowrap">Friends</span>
           </button>
+          
           <button
             onClick={(e: Event) => handleTabClick('matchHistory', e)}
             className="flex items-center justify-between px-6 py-1 w-[130px] text-white bg-no-repeat bg-contain bg-center"
@@ -94,10 +107,18 @@ export const SettingsLayout: ComponentFunction<SettingsLayoutProps> = (props) =>
           >
             <span className="font-luckiest text-sm pt-2 whitespace-nowrap">Edit Profile</span>
           </button>
+
+          <button
+            onClick={(e: Event) => handleTabClick('security', e)}
+            className="flex items-center justify-between px-6 py-1 w-[130px] text-white bg-no-repeat bg-contain bg-center flex-shrink-0"
+            style={{ backgroundImage: `url('/images/setting-assests/${activeTab === 'security' ? 'bg-active.svg' : 'bg-noactive.svg'}')` }}
+          >
+            <span className="font-luckiest text-sm pt-2 whitespace-nowrap">Security</span>
+          </button>
         </nav>
         
-        <div className="flex-1 w-full">
-          {renderTab()}
+        <div className="flex-1 w-full relative">
+          {renderAllTabs()}
         </div>
       </main>
     </div>

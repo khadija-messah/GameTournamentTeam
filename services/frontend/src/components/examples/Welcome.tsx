@@ -4,15 +4,15 @@ import { h } from "../../vdom/createElement";
 
 export const Welcome: ComponentFunction = () => {
   const handleGoogleLogin = useCallback(() => {
-    window.location.href = '/api/auth/google';
+    window.location.href = '/api/oauth/google';
   }, []);
 
   const handleGithubLogin = useCallback(() => {
-    window.location.href = '/api/auth/github';
+    window.location.href = '/api/oauth/github';
   }, []);
 
   const handle42Login = useCallback(() => {
-    window.location.href = '/api/auth/intra';
+    window.location.href = '/api/oauth/intra';
   }, []);
 
   return (

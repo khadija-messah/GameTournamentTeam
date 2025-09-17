@@ -6,7 +6,7 @@ import { useEffect } from '../../hooks/useEffect';
 import { SettingsLayout } from './SettingsLayout';
 
 interface SettingsPageProps {
-  defaultTab?: 'profile' | 'friends' | 'achievements' | 'matchHistory' | 'overview';
+  defaultTab?: 'profile' | 'friends' | 'achievements' | 'matchHistory' | 'overview' | 'security';
 }
 
 export const SettingsPage: ComponentFunction<SettingsPageProps> = (props) => {

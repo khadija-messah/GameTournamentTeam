@@ -10,8 +10,15 @@ export const AuthForm: ComponentFunction = () => {
     username: '',
     email: '',
     password: '',
+    twoFA: '',
     confirmPassword: ''
   });
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+
+
+
 
   const showLogin = useCallback(() => setIsLoginMode(true), []);
   const showRegister = useCallback(() => setIsLoginMode(false), []);
@@ -20,14 +27,40 @@ export const AuthForm: ComponentFunction = () => {
     setFormData(prev => ({ ...prev, [field]: value }));
   }, []);
 
-  ///////////////////////////////
   const handleSubmit = useCallback(async (e: Event) => {
     e.preventDefault();
-    
-    // Validate confirm password in register mode
-    if (!isLoginMode && formData.password !== formData.confirmPassword) {
-      alert("Passwords don't match!");
+    setError('');
+    setLoading(true);
+
+    // Username validation: 3-20 chars, alphanumeric/underscore
+    const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
+    if (!usernameRegex.test(formData.username)) {
+      setError('Username must be 3-20 characters and contain only letters, numbers, or underscores.');
+      setLoading(false);
       return;
+    }
+
+    // Password validation: min 8 chars, at least one letter and one number
+    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d!@#$%^&*()_+\-=]{8,}$/;
+    if (!passwordRegex.test(formData.password)) {
+      setError('Password must be at least 8 characters and contain at least one letter and one number.');
+      setLoading(false);
+      return;
+    }
+
+    // Email validation (only for register)
+    if (!isLoginMode) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email)) {
+        setError('Please enter a valid email address.');
+        setLoading(false);
+        return;
+      }
+      if (formData.password !== formData.confirmPassword) {
+        setError("Passwords don't match!");
+        setLoading(false);
+        return;
+      }
     }
 
     try {
@@ -36,54 +69,38 @@ export const AuthForm: ComponentFunction = () => {
         : 'api/users/register';
 
       const requestBody = isLoginMode
-        ? {
-            username: formData.username,
-            password: formData.password
-          }
-        : {
-            username: formData.username,
-            password: formData.password,
-            email: formData.email,
-          };
-          console.log(`http://${import.meta.env.VITE_USER_SERVICE_HOST}:${import.meta.env.VITE_USER_SERVICE_PORT}/${apiUrl}`);
-      const response = await fetch(`http://${import.meta.env.VITE_USER_SERVICE_HOST}:${import.meta.env.VITE_USER_SERVICE_PORT}/${apiUrl}`, 
-        {
+        ? { username: formData.username, password: formData.password, twoFA: formData.twoFA }
+        : { username: formData.username, password: formData.password, email: formData.email };
+          
+      const response = await fetch(`http://${import.meta.env.VITE_USER_SERVICE_HOST}:${import.meta.env.VITE_USER_SERVICE_PORT}/${apiUrl}`, {
         method: 'POST',
-        headers: 
-        {
+        headers: {
           'Content-Type': 'application/json'
         },
+        credentials: 'include',
         body: JSON.stringify(requestBody)
       });
 
-      if (!response.ok) 
-      {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Authentication failed');
-      }
-      window.location.href = '/home'
-      // const data = await response.json();
-      // const token = data.token;
+      const data = await response.json();
 
-      // console.log('successful:', data);
-      
-      
-    } 
-    catch (error) 
-    {
+      if (response.ok) {
+        if (!isLoginMode) 
+        {
+          window.location.href = data.redirectUrl || '/home';
+        } 
+       else {
+          window.location.href = '/home';
+        }
+      } 
+    } catch (error: any) {
       console.error('Authentication error:', error);
-      if (error instanceof Error) 
-      {
-        alert(error.message || 'An error occurred during authentication');
-      }
-      else 
-      {
-        alert('An unknown error occurred');
-      }
+      setError('An error occurred during authentication');
+    } finally {
+      setLoading(false);
     }
   }, [formData, isLoginMode]);
-  ////////////////////////////////////////
 
+  // namoussa login/register form
   return (
     <div 
       className='relative min-h-screen bg-cover bg-center'
@@ -109,6 +126,12 @@ export const AuthForm: ComponentFunction = () => {
                 Sign Up
               </button>
             </div>
+
+            {error && (
+              <div className='bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4'>
+                {error}
+              </div>
+            )}
           
             <img
               src='/images/mrbean-open.webp'
@@ -116,13 +139,12 @@ export const AuthForm: ComponentFunction = () => {
               className='relative top-[39px] left-[200px] w-48 transform transition-transform duration-300 hover:scale-105 hidden sm:hidden lg:block z-[5]'
             />
 
-           
             <form onSubmit={handleSubmit} className='relative z-[10]'>
               {!isLoginMode && (
                 <input
                   type='email'
                   placeholder='Email'
-                  className='w-full mb-3 bg-[#F2F0F0] px-4 py-3 rounded-3xl  border outline-none focus:border-[#3F99B4]'
+                  className='w-full mb-3 bg-[#F2F0F0] px-4 py-3 rounded-3xl border outline-none focus:border-[#3F99B4]'
                   value={formData.email}
                   onInput={(e: Event) => handleInputChange('email', (e.target as HTMLInputElement).value)}
                   required={!isLoginMode}
@@ -136,6 +158,13 @@ export const AuthForm: ComponentFunction = () => {
                 value={formData.username}
                 onInput={(e: Event) => handleInputChange('username', (e.target as HTMLInputElement).value)}
                 required
+              />
+              <input
+                type='text'
+                placeholder='2FA'
+                className='w-full mb-3 px-4 bg-[#F2F0F0] py-3 rounded-3xl border outline-none focus:border-[#3F99B4]'
+                value={formData.twoFA}
+                onInput={(e: Event) => handleInputChange('twoFA', (e.target as HTMLInputElement).value)}
               />
 
               <input
@@ -158,12 +187,11 @@ export const AuthForm: ComponentFunction = () => {
                 />
               )}
 
-            
               <button 
                 type='submit'
-                className='w-full bg-[#67A7B9] hover:bg-[#044850] text-white py-3 rounded-3xl font-semibold transition mb-10'
+                className='w-full bg-[#67A7B9] hover:bg-[#044850] text-white py-3 rounded-3xl font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed mb-10'
               >
-                {isLoginMode ? 'Sign In' : 'Sign Up'}
+                {loading ? (isLoginMode ? 'Signing In...' : 'Signing Up...') : (isLoginMode ? 'Sign In' : 'Sign Up')}
               </button>
             </form>
             
@@ -172,13 +200,13 @@ export const AuthForm: ComponentFunction = () => {
               <div className='flex gap-6 w-full relative'>
                 <button
                   onClick={showLogin}
-                  className={`flex-1 py-2 rounded-full font-semibold transition-all duration-300 relative z-10 ${isLoginMode ? 'text-white bg-[#67A7B9]' : 'text-[#858585] bg-[#F2F0F0]'}`}
+                  className={`flex-1 py-2 rounded-full font-semibold transition-all duration-300 relative z-10 disabled:cursor-not-allowed ${isLoginMode ? 'text-white bg-[#67A7B9]' : 'text-[#858585] bg-[#F2F0F0]'}`}
                 >
                   <span className='relative z-20'>Login</span>
                 </button>
                 <button
                   onClick={showRegister}
-                  className={`flex-1 py-2 rounded-full font-semibold transition-all duration-300 relative z-10 ${!isLoginMode ? 'text-white bg-[#67A7B9]' : 'text-[#858585] bg-[#F2F0F0]'}`}
+                  className={`flex-1 py-2 rounded-full font-semibold transition-all duration-300 relative z-10 disabled:cursor-not-allowed ${!isLoginMode ? 'text-white bg-[#67A7B9]' : 'text-[#858585] bg-[#F2F0F0]'}`}
                 >
                   <span className='relative z-20'>Register</span>
                 </button>

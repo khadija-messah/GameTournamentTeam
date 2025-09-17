@@ -1,7 +1,3 @@
-import { CounterExample } from "../components/examples/Counter"; 
-import { PongLoginPage } from "../components/Auth/LoginForm";
-import { CounterClassComponent } from "../components/examples/ClassComp";
-
 import { Router } from "../utils/router";
 import { Component } from "./Component";
 import { ComponentFunction, ComponentProps, VNode } from "../types/global";
@@ -23,8 +19,11 @@ import { Home } from "../components/home/Home";
 
 
 import { SettingsPage } from '../components/settings/SettingsPage';
-import { isJSDocAuthorTag } from "typescript";
-
+import  { SecuritySettings } from '../components/settings/SecuritySettings';
+import { Background } from "../components/chat_front/background";
+import { ChatService } from "../components/chat_front/ChatLayouts";
+import { OverviewSettings } from "../components/settings/OverviewSettings";
+import { ProfilePage } from "../components/settings/ProfilePage";
 
 
 
@@ -209,7 +208,7 @@ private createFunctionalComponent<P = any>(
         // Call the functional component and get the VNode
         const vnode = componentFn(props);
         
-        console.log(" FUNCTIONAL COMPONENT: Generated VNode", vnode);
+        // console.log(" FUNCTIONAL COMPONENT: Generated VNode", vnode);
         
         // Return the VNode directly - this triggers Virtual DOM path in Component.ts
         return vnode;
@@ -228,7 +227,7 @@ private createFunctionalComponent<P = any>(
     }
 
     componentDidUpdate(): void {
-      console.log("FUNCTIONAL COMPONENT: Updated");
+      // console.log("FUNCTIONAL COMPONENT: Updated");
     }
 
     componentWillUnmount(): void {
@@ -262,19 +261,19 @@ private cleanupActiveComponents(): void {
 private setupRoutes(): void {
   console.log("Setting up routes...");
   
-  this.router.addRoute("/counter", () =>
-    this.createFunctionalComponent(CounterExample, { initialCount: 1 })
-  );
 
 
-// this.router.addRoute("/home", () =>
-//   this.createClassComponent(CounterClassComponent, { initialCount: 1 })
-// );
+this.router.addRoute('/profile/:username', (params) => {
+  console.log("Routing to profile of:", params?.username);
+  return this.createFunctionalComponent(ProfilePage, { username: params?.username });
+});
 
-// Router configuration
+this.router.addRoute("/Chat-Friend", () => 
+  this.createFunctionalComponent(ChatService)
+);
 this.router.addRoute('/settings', () => 
   this.createFunctionalComponent(SettingsPage, { defaultTab: 'profile' })
-);
+); 
 
 this.router.addRoute('/settings/profile', () => 
   this.createFunctionalComponent(SettingsPage, { defaultTab: 'profile' })
@@ -292,6 +291,16 @@ this.router.addRoute('/settings/overview', () =>
   this.createFunctionalComponent(SettingsPage, { defaultTab: 'overview' })
 );
 
+//Type '{}' is missing the following properties from type '{ profileData: any; setUpdateAll: (val: boolean) => void; }': profileData, setUpdateAllts(2739)
+
+this.router.addRoute('/settings/security', () => 
+  this.createFunctionalComponent(SettingsPage, { defaultTab: 'security' })
+);
+
+///AchievementSettings
+this.router.addRoute('/settings/achievements', () => 
+  this.createFunctionalComponent(SettingsPage, { defaultTab: 'achievements' })
+);
 
  this.router.addRoute("/login", () => 
   this.createFunctionalComponent(AuthForm)
@@ -299,17 +308,12 @@ this.router.addRoute('/settings/overview', () =>
    this.router.addRoute("/", () => 
   this.createFunctionalComponent(Welcome)
 );
-
     
 
    this.router.addRoute("/home", () => 
   this.createFunctionalComponent(Home)
 );
   
-  this.router.addRoute("/pinlog", () =>
-    this.createFunctionalComponent(PongLoginPage)
-  );
-
   console.log("Routes configured");
 }
 
@@ -335,16 +339,16 @@ this.router.addRoute('/settings/overview', () =>
     this.performanceMonitor = PerformanceOptimizer.startMonitoring(30000); // 30 seconds
 
     // Log performance metrics periodically in development
-    if (this.config.enableDevTools) {
-      setInterval(() => {
-        const metrics = PerformanceOptimizer.getMetrics();
-        if (metrics.updateCount > 0) {
-          console.group("🔍 Performance Metrics");
-          console.table(metrics);
-          console.groupEnd();
-        }
-      }, 60000); // Every minute
-    }
+    // if (this.config.enableDevTools) {
+    //   setInterval(() => {
+    //     const metrics = PerformanceOptimizer.getMetrics();
+    //     if (metrics.updateCount > 0) {
+    //       console.group("🔍 Performance Metrics");
+    //       console.table(metrics);
+    //       console.groupEnd();
+    //     }
+    //   }, 60000); // Every minute
+    // }
   }
 
 
@@ -385,21 +389,21 @@ this.router.addRoute('/settings/overview', () =>
       },
     };
 
-    console.log(
-      "🔧 Development tools available at window.__FRAMEWORK_DEVTOOLS__"
-    );
-    console.log("🐛 Available commands:");
-    console.log(
-      "  - __FRAMEWORK_DEVTOOLS__.getMetrics() - Get performance metrics"
-    );
-    console.log(
-      "  - __FRAMEWORK_DEVTOOLS__.clearCache() - Clear memoization cache"
-    );
-    console.log("  - __FRAMEWORK_DEVTOOLS__.restart() - Restart application");
-    console.log("  - __FRAMEWORK_DEVTOOLS__.debug.* - Debug utilities");
-    console.log("     ---> enableVerboseLogging");
-    console.log("     ---> triggerUpdate");
-    console.log("     ---> inspectComponent(component: any)");
+    // console.log(
+    //   "🔧 Development tools available at window.__FRAMEWORK_DEVTOOLS__"
+    // );
+    // console.log("🐛 Available commands:");
+    // console.log(
+    //   "  - __FRAMEWORK_DEVTOOLS__.getMetrics() - Get performance metrics"
+    // );
+    // console.log(
+    //   "  - __FRAMEWORK_DEVTOOLS__.clearCache() - Clear memoization cache"
+    // );
+    // console.log("  - __FRAMEWORK_DEVTOOLS__.restart() - Restart application");
+    // console.log("  - __FRAMEWORK_DEVTOOLS__.debug.* - Debug utilities");
+    // console.log("     ---> enableVerboseLogging");
+    // console.log("     ---> triggerUpdate");
+    // console.log("     ---> inspectComponent(component: any)");
   }
 
   async restart(): Promise<void> {

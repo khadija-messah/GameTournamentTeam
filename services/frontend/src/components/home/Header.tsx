@@ -1,12 +1,13 @@
 import { Search } from "./Search";
 import { NotificationButton } from './Notif';
+import { useModalManager } from './ModalManager';
 import { h } from '../../vdom/createElement';
 import { ComponentFunction } from "../../types/global";
 import { useEffect } from "../../hooks/useEffect";
-
-
+import { Bchat } from "../chat_front/Bchat";
 
 export const Header: ComponentFunction = () => {
+  const modalManager = useModalManager();
   
   const handleLogout = async () => {
     try {
@@ -27,12 +28,18 @@ export const Header: ComponentFunction = () => {
     }
   };
 
-
   const handleSettingsClick = (e: Event) => {
     e.preventDefault();
     window.history.pushState({}, '', '/settings');
     window.dispatchEvent(new PopStateEvent('popstate'));
   };
+
+  const handleChatClick = (e: Event) => {
+    e.preventDefault();
+    window.history.pushState({}, '', '/Chat-Friend');
+    window.dispatchEvent(new PopStateEvent('popstate'));
+  };
+  
   return (
     <header
     className="relative flex justify-between items-center py-3 shadow-md text-white"
@@ -53,13 +60,12 @@ export const Header: ComponentFunction = () => {
                   <h2 className="text-xl font-semibold">The Game</h2>
                 </a>
 
-
      
       <div className="hidden sm:flex items-center justify-around w-1/2  md:px-2 h-[64px] relative left-12 top-1">
         <nav className="flex gap-3 md:gap-3 flex-none justify-center mr-[180px] min-w-0">
 
         
-          <NotificationButton />
+          <NotificationButton modalManager={modalManager} />
       
 
         <div className="min-w-0" >
@@ -69,15 +75,17 @@ export const Header: ComponentFunction = () => {
         </a>
           </button>
         </div>
-
+          {/* <Bchat/> */}
           <div className="relative min-w-0">
           <button className="flex items-center gap-2   md:px-3 py-1    overflow-hidden whitespace-nowrap transition-transform duration-200 hover:scale-95 ">
+          <a  onClick={handleChatClick}>
             <img src="/images/home-assests/chat-icon.svg" alt="chat" className="w-6 h-6 md:w-10 md:h-10" />
+          </a>
           </button>
           <span className="absolute top-3 right-5 block h-[6px] w-[6px] rounded-full bg-red-500 transition-transform duration-200 hover:scale-95 "></span>
         </div>
 
-        <Search />
+        <Search modalManager={modalManager} />
         
         <div className="min-w-0">
           <button className="flex items-center gap-2   md:px-3 py-1    overflow-hidden whitespace-nowrap transition-transform duration-200 hover:scale-95">
@@ -95,11 +103,6 @@ export const Header: ComponentFunction = () => {
         </div>
         
       </div>
-      {/* <div className="sm:hidden z-10">
-        <button className="flex items-center gap-2 border px-2 py-1 rounded hover:bg-[#427970]">
-          <img src="/images/home-assests/menu-icon.svg" alt="menu" className="w-6 h-6" />
-        </button>
-      </div> */}
     </header>
 )
 }

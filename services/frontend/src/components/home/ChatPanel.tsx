@@ -3,7 +3,7 @@ import { useRef } from "../../hooks/useRef";
 import { useState } from "../../hooks/useState";
 import { h } from '../../vdom/createElement';
 import { ComponentFunction } from "../../types/global";
-
+import Xo from "./xo/Xo";
 
 interface Friend {
   id: number;
@@ -45,7 +45,12 @@ export const ChatPanel: ComponentFunction = () => {
   useEffect(() => {
     const fetchFriends = async () => {
       try {
-        const response = await fetch(`http://${import.meta.env.VITE_USER_SERVICE_HOST}:${import.meta.env.VITE_USER_SERVICE_PORT}/api/friends/friends`);
+        const response = await fetch(`http://${import.meta.env.VITE_USER_SERVICE_HOST}:${import.meta.env.VITE_USER_SERVICE_PORT}/api/friends/friends`,
+          {
+            credentials: 'include',
+            method: "GET",
+          }
+        );
         if (!response.ok) {
           throw new Error(`Failed to fetch friends: ${response.status} ${response.statusText}`);
         }
@@ -86,6 +91,7 @@ export const ChatPanel: ComponentFunction = () => {
             </div>
           </div>
         </div>
+        <Xo />
       </aside>
     );
   }
@@ -130,6 +136,7 @@ export const ChatPanel: ComponentFunction = () => {
           </div>
         </div>
       </div>
+      <Xo />
     </aside>
   );
 }

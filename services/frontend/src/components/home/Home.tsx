@@ -17,10 +17,12 @@ export const Home: ComponentFunction = () => {
         const response = await fetch(
           `http://${import.meta.env.VITE_USER_SERVICE_HOST}:${import.meta.env.VITE_USER_SERVICE_PORT}/api/users/get/me`,
           {
+            /// ==========================================================
+            // edited by regex - include credentials to send cookies --- IGNORE ---
+            /// ==========================================================
             method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-            },
+            credentials: 'include'
+            /// ==========================================================
           }
         );
 

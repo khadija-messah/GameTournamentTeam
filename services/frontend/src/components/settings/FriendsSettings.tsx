@@ -2,6 +2,7 @@ import { h } from '../../vdom/createElement';
 import { useState } from '../../hooks/useState';
 import { ComponentFunction } from "../../types/global";
 import { useEffect } from '../../hooks/useEffect';
+import { ProfilePage } from './ProfilePage';
 
 type Friend = {
   id: number;
@@ -27,7 +28,11 @@ export const FriendsSettings: ComponentFunction = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(`http://${import.meta.env.VITE_USER_SERVICE_HOST}:${import.meta.env.VITE_USER_SERVICE_PORT}/api/users`);
+      const response = await fetch(`http://${import.meta.env.VITE_USER_SERVICE_HOST}:${import.meta.env.VITE_USER_SERVICE_PORT}/api/users`,{
+            method: "GET",
+            credentials: 'include'
+          }
+        );
 
       if (!response.ok) {
         throw new Error('Failed to fetch users data');
@@ -60,6 +65,7 @@ export const FriendsSettings: ComponentFunction = () => {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({ username, action })
       });
 
@@ -78,25 +84,13 @@ export const FriendsSettings: ComponentFunction = () => {
     fetchFriends();
   }, []);
 
+  // Ensure friends is always an array
+  const safeFriends = Array.isArray(friends) ? friends : [];
   const filteredFriends =
     sortBy === 'all'
-      ? friends
-      : friends.filter(f => f.status === sortBy);
+      ? safeFriends
+      : safeFriends.filter(f => f.status === sortBy);
   const friendColumns = chunk(filteredFriends, 2);
-
-  function getStatusColor(status: string) {
-    switch (status) {
-      case 'friend':
-        return 'bg-green-500';
-      case 'pending':
-        return 'bg-yellow-500';
-      case 'blocked':
-        return 'bg-red-500';
-      default:
-        return 'bg-gray-400';
-    }
-  }
-
   function getActionButtons(friend: { id: number; username: string; avatar: string; status: string; }) {
     if (friend.status === "friend") {
       return (
@@ -156,7 +150,27 @@ export const FriendsSettings: ComponentFunction = () => {
           </button>
         </div>
       );
-    } else if (friend.status === "blocked") {
+    }
+  else if (friend.status === 'request')
+{
+  return (
+      <button
+      type="button"
+      onClick={() => handleFriendAction(friend.username, 'cancel')}        
+          className="
+          flex items-center gap-2 px-3 h-[50px]
+          bg-[url('/images/home-assests/bg-cancel.svg')]
+          bg-no-repeat bg-center bg-contain
+          text-white font-semibold text-sm
+          transition-transform duration-200 hover:scale-95 p-5
+        ">
+        <i className="fa-solid fa-xmark text-md"></i>
+        <span>Cancel</span>
+    </button>
+  );
+
+} 
+    else if (friend.status === "blocked") {
       return (
         <button 
           onClick={() => handleFriendAction(friend.username, 'unblock')}
@@ -191,7 +205,13 @@ export const FriendsSettings: ComponentFunction = () => {
       </div>
     );
   }
-
+  const handleProfileClick = (username: string, e: Event) => {
+    e.preventDefault();
+    e.stopPropagation();
+    window.history.pushState({}, "", `/profile/${username}`);
+    window.dispatchEvent(new PopStateEvent("popstate"));
+  };
+  // if(viewProfile) return <ProfilePage username = {viewProfile}/>
   return (
     <div
       className="h-[700px] max-w-[1400px] bg-[#91BFBF] bg-opacity-85 mr-auto mt-12 rounded-xl p-6 pt-12 overflow-x-auto"
@@ -238,7 +258,9 @@ export const FriendsSettings: ComponentFunction = () => {
                 >
                   <div className="flex flex-col items-center justify-center h-full">
                     
-                    <div className="relative w-[100px] h-[100px] flex-shrink-0 mt-10">
+                    <div className="relative w-[100px] h-[100px] flex-shrink-0 mt-10"
+                   onClick={(e: Event) => handleProfileClick(friend.username, e)}
+                    >
                       {friend.status === 'friend' ? (
                         <div
                           className="relative w-24 h-24 flex items-center justify-center bg-no-repeat bg-contain"

@@ -1,15 +1,20 @@
 const fastify = require("fastify")();
 const db = require("./models");
-const { Op } = require("sequelize");
 const { v4: uuidv4 } = require("uuid");
 const path = require("path");
 const fastifyStatic = require("@fastify/static");
-const { UserRoutes, FriendRoutes, OauthRoutes, checkCodeRoutes, _2faRoutes, checksRoutes, NotificationRoutes } = require("./Router");
+const { Op } = require("sequelize");
+// i add AuthRoutes only
+const { UserRoutes, FriendRoutes, OauthRoutes, checkCodeRoutes, _2faRoutes, checksRoutes, NotificationRoutes, AuthRoutes } = require("./Router");
 const logger = require("./util/logger_request");
 const websocket = require('@fastify/websocket')
 const { log } = require("./util/logger");
+
+const checkAuthJWT = require('./util/checkauthjwt')
+
+
 fastify.addHook("onResponse", (req, res, done) => {
-  logger(req, res);
+  req = logger(req, res);
   log({
     ...req.object,
     request_id: `${req.object.service}-${req.object.username}-${uuidv4()}`,
@@ -35,17 +40,26 @@ fastify.addHook("onRequest", (req, res, done) => {
 });
 const fastifyCookie = require('@fastify/cookie');
 
+
+
+
 fastify.register(fastifyCookie);
 fastify.register(require("@fastify/multipart"));
 fastify.register(websocket).then(() => {
   fastify.register(UserRoutes, { prefix: "/api/users" });
 })
 fastify.register(FriendRoutes, { prefix: "/api/friends" });
-fastify.register(OauthRoutes, { prefix: "/api/auth" });
+fastify.register(OauthRoutes, { prefix: "/api/oauth" });
 fastify.register(checkCodeRoutes, { prefix: "/api" });
 fastify.register(_2faRoutes, { prefix: "/api/2fa" });
 fastify.register(checksRoutes, { prefix: "/api/check" });// /api/check/token
 fastify.register(NotificationRoutes, { prefix: "/api/notifications" });
+
+
+
+// Add this with your other route registrations
+fastify.register(AuthRoutes, { prefix: "/api/auth" });
+///////////////////////////////
 
 fastify.register(fastifyStatic, {
   root: path.join(__dirname, "uploads"),
@@ -54,30 +68,7 @@ fastify.register(fastifyStatic, {
 
 const PORT = process.env.PORT || 8001;
 const HOST = process.env.HOST || "0.0.0.0";
-const checkAuthJWT = require('./util/checkauthjwt')
-fastify.get('/api/friends/rel/:id', async (request, reply) => {
-  const { check, payload } = await checkAuthJWT(request, reply);
-  if (check) return check;
-  const userId = payload.id;
-  const otherId = request.params.id;
-  try {
-    const relation = await db.Relationship.findOne({
-      where: {
-        [Op.or]: [
-          { userId: userId, otherId: otherId },
-          { userId: otherId, otherId: userId }
-        ]
-      }
-    });
-    if (!relation) {
-      return reply.send(null);
-    }
-    reply.send({ status: relation.status });
-  } catch (error) {
-    console.error("Error fetching relationship:", error);
-    reply.status(500).send({ error: "Internal Server Error" });
-  }
-});
+
 function connect() {
   db.sequelize
     .sync()

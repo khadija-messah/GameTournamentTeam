@@ -799,11 +799,11 @@ export class PerformanceOptimizer {
       }
       
       // Log metrics in development
-      if (import.meta.env?.MODE === 'development') {
-        console.group('Performance Metrics');
-        console.table(this.getMetrics());
-        console.groupEnd();
-      }
+      // if (import.meta.env?.MODE === 'development') {
+      //   console.group('Performance Metrics');
+      //   console.table(this.getMetrics());
+      //   console.groupEnd();
+      // }
     }, interval);
 
     return () => {
