@@ -161,7 +161,12 @@ export const Bchat: ComponentFunction = () => {
           </button>
         )}
         {active && <Online data_friend={friends} name_friend={setNameFriend} />}
-        <Barre friend={allfriend} onSelectFriend={setNameFriend} />
+        <Barre 
+            friend={allfriend} 
+            onSelectFriend={setNameFriend} 
+            messages={messages}
+            currentUserId={id}
+          />
       </div>
       {showinfo && nameFriend && (
             <div className="absolute top-1/3 left-1/2 transform -translate-x-1/2 -translate-y-1/2
