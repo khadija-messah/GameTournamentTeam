@@ -1,3 +1,4 @@
+
 import { h } from '../../vdom/createElement';
 import { ComponentFunction } from "../../types/global";
 import { useState } from '../../hooks/useState';
@@ -131,8 +132,8 @@ export const Barre: ComponentFunction<BarreProps> = ({
             onClick={changeBlock} 
             className="absolute top-[17%] hover:shadow-lg w-[40%] left-[5%] hover:bg-sky-custom/70 rounded-xl"
           >
-            <h2 className="absolute text-[0.9vw] font-luckiest text-white top-[33%] left-[29%]">
-              Chats ({friendsWithConversations.length})
+            <h2 className="absolute text-[0.9vw] font-luckiest text-white top-[33%] left-[12%]">
+            Messages({friendsWithConversations.length})
             </h2>
             <img src='images/chat/block-list.png' alt='button-block' />
           </button>
