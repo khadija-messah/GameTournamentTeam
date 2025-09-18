@@ -41,7 +41,7 @@ fastify.register(fastifyStatic, {
 const clients = new Map();
 const userFriends = new Map();
 const blockedUsers = new Map();
-
+const notificationClients = new Set();
 
 function add_connection(userId, connection) 
 {
@@ -198,7 +198,11 @@ fastify.register(async function (fastify){
         add_connection(data.id, connection);
         broadcast_online(data.id);
       }
-
+      if(data.type == 'notification')
+      {
+        connection.userId = data.id;
+        notificationClients.add(connection);
+      }
       if (data.type === 'message') {
         const fromId = data.from;
         const toId = data.to;
@@ -215,6 +219,13 @@ fastify.register(async function (fastify){
         };
         broadcast_all(data_send);
 
+        notificationClients.forEach(conn => {
+          if (conn.readyState === conn.OPEN && conn.userId === toId) {
+              conn.send(JSON.stringify({
+                  notif:true
+              }));
+          }
+        });
         try {
           await Promise.all([
             prisma.user.upsert(
@@ -248,7 +259,12 @@ fastify.register(async function (fastify){
           connection.send(JSON.stringify({ type: 'pong' }));
     });
 
-    connection.on('close', () => { if (connection.userId) remove_connection(connection.userId, connection); });
+    connection.on('close', () => 
+      { 
+        if (connection.userId) remove_connection(connection.userId, connection); 
+        notificationClients.delete(connection);
+      }
+    );
   });
 });
 

@@ -98,7 +98,7 @@ export const Barre: ComponentFunction<BarreProps> = ({
               <span className="text-white text-sm font-bold">×</span>
             </button>
 
-            <div className="pt-8">
+            <div className="absolute top-[16%] h-[82%] w-full bg-white/20 rounded-l z-50">
               {filteredFriends.length > 0 ? (
                 filteredFriends.map((user) => (
                   <button
